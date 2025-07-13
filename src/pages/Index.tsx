@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import MoleculeViewer from '@/components/MoleculeViewer';
 import SymmetryControls from '@/components/SymmetryControls';
 import ProjectionViewer from '@/components/ProjectionViewer';
-import { molecules } from '@/data/molecules';
 import OpticalExperiment from '@/components/OpticalExperiment';
+import PhysicsVisualization from '@/components/PhysicsVisualization';
+import { molecules } from '@/data/molecules';
 import { experiments } from '@/data/experiments';
+import { physicsConcepts } from '@/data/physics';
 import { Atom, Eye, RotateCcw, Zap, Beaker } from 'lucide-react';
 
 const Index = () => {
@@ -22,6 +24,7 @@ const Index = () => {
   });
   const [currentProjection, setCurrentProjection] = useState('3d');
   const [selectedExperiment, setSelectedExperiment] = useState(experiments[0]);
+  const [selectedPhysicsConcept, setSelectedPhysicsConcept] = useState(physicsConcepts[0]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -34,8 +37,8 @@ const Index = () => {
                 <Atom className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Organic Chemistry 3D</h1>
-                <p className="text-sm text-gray-600">Interactive Molecular Symmetry, Projections & Experiments</p>
+                <h1 className="text-2xl font-bold text-gray-900">Science 3D Visualizer</h1>
+                <p className="text-sm text-gray-600">Interactive Chemistry, Physics & Optical Experiments</p>
               </div>
             </div>
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -47,7 +50,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="molecules" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="molecules" className="flex items-center gap-2">
               <Atom className="w-4 h-4" />
               Molecular Symmetry
@@ -55,6 +58,10 @@ const Index = () => {
             <TabsTrigger value="experiments" className="flex items-center gap-2">
               <Beaker className="w-4 h-4" />
               Optical Experiments
+            </TabsTrigger>
+            <TabsTrigger value="physics" className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Physics
             </TabsTrigger>
           </TabsList>
 
@@ -268,6 +275,69 @@ const Index = () => {
               {/* Experiment Visualization */}
               <div className="lg:col-span-3">
                 <OpticalExperiment experiment={selectedExperiment} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="physics">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              
+              {/* Physics Concept Selection Panel */}
+              <div className="lg:col-span-1 space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-blue-500" />
+                      Physics Concepts
+                    </CardTitle>
+                    <CardDescription>
+                      Select a physics concept to visualize
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {physicsConcepts.map((concept) => (
+                      <Button
+                        key={concept.id}
+                        variant={selectedPhysicsConcept.id === concept.id ? "default" : "outline"}
+                        className="w-full justify-start text-left"
+                        onClick={() => setSelectedPhysicsConcept(concept)}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{concept.name}</span>
+                          <span className="text-xs text-muted-foreground truncate">
+                            {concept.category.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </Button>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Theory Panel */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Theory</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-700 mb-3">{selectedPhysicsConcept.theory}</p>
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Applications:</h4>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        {selectedPhysicsConcept.applications.map((app, index) => (
+                          <li key={index} className="flex items-center gap-1">
+                            <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                            {app}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Physics Visualization */}
+              <div className="lg:col-span-3">
+                <PhysicsVisualization concept={selectedPhysicsConcept} />
               </div>
             </div>
           </TabsContent>
