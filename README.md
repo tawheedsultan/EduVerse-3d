@@ -1,5 +1,5 @@
 # 🔬 EduVerse-3d — Interactive Concept Visualizer using lovable(entire vibe coding project)
-
+# hii developers ,i dont have coding knowledge but an idea help me in this journey
 Welcome to **eEduVerse-3d**, an open-source project built with [Vibe Coding Tool]https://lovable.dev/) to help learners intuitively understand complex concepts in **Science, Technology, Engineering, and Mathematics** through interactive animations and visualizations.
 
 This tool aims to make abstract ideas more concrete by bringing them to life visually — perfect for students, educators, and enthusiasts alike.
