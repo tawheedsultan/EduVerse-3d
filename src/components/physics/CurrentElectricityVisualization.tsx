@@ -19,11 +19,13 @@ interface CurrentElectricityProps {
 const ElectronFlow = ({ 
   isOn, 
   speed, 
-  showConventional 
+  showConventional,
+  current
 }: { 
   isOn: boolean, 
   speed: number, 
-  showConventional: boolean 
+  showConventional: boolean,
+  current: number
 }) => {
   const electronsRef = useRef<any>();
   const conventionalRef = useRef<any>();
@@ -32,7 +34,7 @@ const ElectronFlow = ({
     if (isOn && electronsRef.current) {
       // Electrons move from negative to positive (opposite to conventional current)
       electronsRef.current.children.forEach((electron: any, index: number) => {
-        electron.position.x += speed * 0.02;
+        electron.position.x += speed * 0.02 * current;
         if (electron.position.x > 4) {
           electron.position.x = -4;
         }
@@ -42,7 +44,7 @@ const ElectronFlow = ({
     if (isOn && showConventional && conventionalRef.current) {
       // Conventional current flows from positive to negative
       conventionalRef.current.children.forEach((particle: any, index: number) => {
-        particle.position.x -= speed * 0.02;
+        particle.position.x -= speed * 0.02 * current;
         if (particle.position.x < -4) {
           particle.position.x = 4;
         }
@@ -50,14 +52,21 @@ const ElectronFlow = ({
     }
   });
 
+  const electronDensity = Math.max(10, Math.min(30, current * 5));
+  const electronSize = Math.max(0.03, Math.min(0.08, current * 0.02));
+
   return (
     <>
       {/* Electrons (blue, moving right) */}
       <group ref={electronsRef}>
-        {Array.from({ length: 20 }, (_, i) => (
-          <mesh key={i} position={[-4 + i * 0.4, 0.1, 0]}>
-            <sphereGeometry args={[0.05]} />
-            <meshPhongMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={0.3} />
+        {Array.from({ length: Math.floor(electronDensity) }, (_, i) => (
+          <mesh key={i} position={[-4 + i * (8 / electronDensity), 0.1, 0]}>
+            <sphereGeometry args={[electronSize]} />
+            <meshPhongMaterial 
+              color="#3b82f6" 
+              emissive="#3b82f6" 
+              emissiveIntensity={0.3 + current * 0.1} 
+            />
           </mesh>
         ))}
       </group>
@@ -65,10 +74,14 @@ const ElectronFlow = ({
       {/* Conventional current (red, moving left) */}
       {showConventional && (
         <group ref={conventionalRef}>
-          {Array.from({ length: 15 }, (_, i) => (
-            <mesh key={i} position={[4 - i * 0.5, -0.1, 0]}>
-              <sphereGeometry args={[0.03]} />
-              <meshPhongMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.3} />
+          {Array.from({ length: Math.floor(electronDensity * 0.7) }, (_, i) => (
+            <mesh key={i} position={[4 - i * (8 / (electronDensity * 0.7)), -0.1, 0]}>
+              <sphereGeometry args={[electronSize * 0.7]} />
+              <meshPhongMaterial 
+                color="#ef4444" 
+                emissive="#ef4444" 
+                emissiveIntensity={0.3 + current * 0.1} 
+              />
             </mesh>
           ))}
         </group>
@@ -218,6 +231,7 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
                 isOn={isCircuitOn} 
                 speed={currentSpeed[0]} 
                 showConventional={showConventional}
+                current={current}
               />
             )}
             
