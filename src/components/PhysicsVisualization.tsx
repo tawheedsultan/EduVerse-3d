@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Zap, X, Maximize } from 'lucide-react';
 import ElectrostaticsVisualization from './physics/ElectrostaticsVisualization';
 import CurrentElectricityVisualization from './physics/CurrentElectricityVisualization';
+import RotationalMotionVisualization from './physics/RotationalMotionVisualization';
 
 interface PhysicsVisualizationProps {
   concept: {
     id: string;
     name: string;
     description: string;
-    category: 'electrostatics' | 'current_electricity';
+    category: 'electrostatics' | 'current_electricity' | 'rotational_motion';
     theory: string;
     applications: string[];
   };
@@ -28,8 +29,10 @@ const PhysicsVisualization = ({ concept }: PhysicsVisualizationProps) => {
   const renderVisualization = () => {
     if (concept.category === 'electrostatics') {
       return <ElectrostaticsVisualization concept={concept} />;
-    } else {
+    } else if (concept.category === 'current_electricity') {
       return <CurrentElectricityVisualization concept={concept} />;
+    } else {
+      return <RotationalMotionVisualization concept={concept} />;
     }
   };
 

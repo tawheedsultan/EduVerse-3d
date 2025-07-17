@@ -101,6 +101,92 @@ const ElectronFlow = ({
   );
 };
 
+const BatterySymbol = ({ value, position }: { value: number, position: Vector3 }) => {
+  return (
+    <group position={position}>
+      {/* Long terminal */}
+      <mesh position={[0, 0.3, 0]}>
+        <boxGeometry args={[0.05, 0.6, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      {/* Short terminal */}
+      <mesh position={[0, -0.3, 0]}>
+        <boxGeometry args={[0.05, 0.3, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      {/* + symbol */}
+      <Html position={[0.2, 0.3, 0]}>
+        <div className="text-sm text-red-500 font-bold">+</div>
+      </Html>
+      {/* - symbol */}
+      <Html position={[0.2, -0.3, 0]}>
+        <div className="text-sm text-blue-500 font-bold">-</div>
+      </Html>
+      {/* Value label */}
+      <Html position={[0, -0.8, 0]}>
+        <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+          {value}V
+        </div>
+      </Html>
+    </group>
+  );
+};
+
+const ResistorSymbol = ({ value, position }: { value: number, position: Vector3 }) => {
+  return (
+    <group position={position}>
+      {/* Zigzag pattern for resistor */}
+      <mesh position={[-0.3, 0, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[-0.2, 0.1, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[-0.1, -0.1, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[0.1, -0.1, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[0.2, 0.1, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      <mesh position={[0.3, 0, 0]}>
+        <boxGeometry args={[0.05, 0.05, 0.1]} />
+        <meshPhongMaterial color="#000000" />
+      </mesh>
+      {/* Value label */}
+      <Html position={[0, -0.5, 0]}>
+        <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+          {value}Ω
+        </div>
+      </Html>
+    </group>
+  );
+};
+
+const WireSegment = ({ start, end, color = "#000000" }: { start: Vector3, end: Vector3, color?: string }) => {
+  const direction = end.clone().sub(start);
+  const length = direction.length();
+  const center = start.clone().add(end).divideScalar(2);
+  
+  return (
+    <mesh position={center}>
+      <cylinderGeometry args={[0.02, 0.02, length]} />
+      <meshPhongMaterial color={color} />
+    </mesh>
+  );
+};
+
 const CircuitVisualization = ({ 
   components, 
   isOn, 
@@ -119,107 +205,120 @@ const CircuitVisualization = ({
   const seriesComponents = components.filter(c => c.connection === 'series');
   const parallelComponents = components.filter(c => c.connection === 'parallel');
 
-  const circuitWidth = Math.max(8, components.length * 1.5);
-  const wireYOffset = 0.5;
+  const circuitWidth = Math.max(6, components.length * 2);
+  const wireYOffset = 1.5;
+
+  // Create circuit layout
+  const seriesSpacing = circuitWidth / (seriesComponents.length + 1);
+  const parallelSpacing = circuitWidth * 0.6 / (parallelComponents.length + 1);
 
   return (
     <>
-      {/* Main circuit wire */}
-      <mesh position={[0, 0, 0]}>
-        <cylinderGeometry args={[0.08, 0.08, circuitWidth]} />
-        <meshPhongMaterial color="#ffd700" />
-      </mesh>
+      {/* Main horizontal wires */}
+      <WireSegment 
+        start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
+        end={new Vector3(circuitWidth/2, wireYOffset, 0)} 
+      />
+      <WireSegment 
+        start={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
+        end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
+      />
+      
+      {/* Vertical connecting wires */}
+      <WireSegment 
+        start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
+        end={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
+      />
+      <WireSegment 
+        start={new Vector3(circuitWidth/2, wireYOffset, 0)} 
+        end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
+      />
 
-      {/* Parallel circuit wire (if parallel components exist) */}
-      {parallelComponents.length > 0 && (
-        <>
-          <mesh position={[0, wireYOffset, 0]}>
-            <cylinderGeometry args={[0.06, 0.06, circuitWidth * 0.8]} />
-            <meshPhongMaterial color="#ffaa00" />
-          </mesh>
-          <mesh position={[0, -wireYOffset, 0]}>
-            <cylinderGeometry args={[0.06, 0.06, circuitWidth * 0.8]} />
-            <meshPhongMaterial color="#ffaa00" />
-          </mesh>
-        </>
-      )}
-
-      {/* Render components */}
-      {components.map((component, index) => {
-        const xPosition = -circuitWidth / 2 + (index + 1) * (circuitWidth / (components.length + 1));
-        const yPosition = component.connection === 'parallel' ? 
-          (index % 2 === 0 ? wireYOffset : -wireYOffset) : 0;
-
+      {/* Render series components */}
+      {seriesComponents.map((component, index) => {
+        const xPosition = -circuitWidth/2 + (index + 1) * seriesSpacing;
+        const yPosition = wireYOffset;
+        
         return (
-          <group key={component.id} position={[xPosition, yPosition, 0]}>
+          <group key={component.id}>
             {component.type === 'battery' ? (
-              <>
-                <mesh>
-                  <cylinderGeometry args={[0.25, 0.25, 0.6]} />
-                  <meshPhongMaterial color="#2c3e50" />
-                </mesh>
-                <mesh position={[0, 0, 0.35]}>
-                  <cylinderGeometry args={[0.15, 0.15, 0.1]} />
-                  <meshPhongMaterial color="#e74c3c" />
-                </mesh>
-                <Html>
-                  <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
-                    {component.value}V
-                  </div>
-                </Html>
-              </>
+              <BatterySymbol 
+                value={component.value} 
+                position={new Vector3(xPosition, yPosition, 0)} 
+              />
             ) : (
-              <>
-                <mesh>
-                  <boxGeometry args={[0.8, 0.4, 0.4]} />
-                  <meshPhongMaterial color="#8b4513" />
-                </mesh>
-                <mesh position={[0, 0, 0.25]}>
-                  <torusGeometry args={[0.2, 0.05, 8, 16]} />
-                  <meshPhongMaterial color="#cd853f" />
-                </mesh>
-                <Html>
-                  <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
-                    {component.value}Ω
-                  </div>
-                </Html>
-              </>
+              <ResistorSymbol 
+                value={component.value} 
+                position={new Vector3(xPosition, yPosition, 0)} 
+              />
             )}
           </group>
         );
       })}
 
-      {/* Current and voltage indicators */}
+      {/* Render parallel components */}
+      {parallelComponents.map((component, index) => {
+        const xPosition = -circuitWidth/2 + (index + 1) * parallelSpacing;
+        const yPosition = 0;
+        
+        return (
+          <group key={component.id}>
+            {/* Vertical connection wires for parallel components */}
+            <WireSegment 
+              start={new Vector3(xPosition, wireYOffset, 0)} 
+              end={new Vector3(xPosition, yPosition + 0.5, 0)} 
+            />
+            <WireSegment 
+              start={new Vector3(xPosition, yPosition - 0.5, 0)} 
+              end={new Vector3(xPosition, -wireYOffset, 0)} 
+            />
+            
+            {component.type === 'battery' ? (
+              <BatterySymbol 
+                value={component.value} 
+                position={new Vector3(xPosition, yPosition, 0)} 
+              />
+            ) : (
+              <ResistorSymbol 
+                value={component.value} 
+                position={new Vector3(xPosition, yPosition, 0)} 
+              />
+            )}
+          </group>
+        );
+      })}
+
+      {/* Circuit measurements */}
       {isOn && (
         <>
-          <Html position={[0, 1.5, 0]}>
+          <Html position={[0, 2.5, 0]}>
             <div className="text-lg font-bold text-green-500 bg-black/70 px-3 py-2 rounded">
-              I = {totalCurrent.toFixed(2)}A
+              Current: {totalCurrent.toFixed(2)}A
             </div>
           </Html>
-          <Html position={[circuitWidth / 2 - 1, -1.5, 0]}>
+          <Html position={[circuitWidth/2 - 1, -2.5, 0]}>
             <div className="text-sm text-red-500 bg-black/70 px-2 py-1 rounded">
-              V = {totalVoltage}V
+              Voltage: {totalVoltage}V
             </div>
           </Html>
-          <Html position={[-circuitWidth / 2 + 1, -1.5, 0]}>
+          <Html position={[-circuitWidth/2 + 1, -2.5, 0]}>
             <div className="text-sm text-blue-500 bg-black/70 px-2 py-1 rounded">
-              R = {equivalentResistance.toFixed(2)}Ω
+              Resistance: {equivalentResistance.toFixed(2)}Ω
             </div>
           </Html>
         </>
       )}
 
-      {/* Connection indicators */}
+      {/* Connection type indicators */}
       {seriesComponents.length > 0 && (
-        <Html position={[0, -2, 0]}>
+        <Html position={[0, -3, 0]}>
           <div className="text-xs bg-blue-500/80 text-white px-2 py-1 rounded">
             Series: {seriesComponents.length} components
           </div>
         </Html>
       )}
       {parallelComponents.length > 0 && (
-        <Html position={[0, -2.5, 0]}>
+        <Html position={[0, -3.5, 0]}>
           <div className="text-xs bg-green-500/80 text-white px-2 py-1 rounded">
             Parallel: {parallelComponents.length} components
           </div>
@@ -380,36 +479,39 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
             
             {circuitMode === 'simple' ? (
               <>
-                {/* Simple circuit wire */}
-                <mesh position={[0, 0, 0]}>
-                  <cylinderGeometry args={[0.1, 0.1, 8]} />
-                  <meshPhongMaterial color="#ffd700" />
-                </mesh>
-                
-                {/* Simple battery */}
-                <group position={[-3.5, 0, 0]}>
-                  <mesh>
-                    <cylinderGeometry args={[0.2, 0.2, 0.5]} />
-                    <meshPhongMaterial color="#000000" />
-                  </mesh>
-                  <Html>
-                    <div className="text-xs bg-black/50 text-white px-2 py-1 rounded">
-                      {simpleVoltage[0]}V
-                    </div>
-                  </Html>
-                </group>
-                
-                {/* Simple resistor */}
-                <group position={[3.5, 0, 0]}>
-                  <mesh>
-                    <boxGeometry args={[0.6, 0.3, 0.3]} />
-                    <meshPhongMaterial color="#8b4513" />
-                  </mesh>
-                  <Html>
-                    <div className="text-xs bg-black/50 text-white px-2 py-1 rounded">
-                      {simpleResistance[0]}Ω
-                    </div>
-                  </Html>
+                {/* Simple circuit layout */}
+                <group>
+                  {/* Main horizontal wires */}
+                  <WireSegment 
+                    start={new Vector3(-4, 1, 0)} 
+                    end={new Vector3(4, 1, 0)} 
+                  />
+                  <WireSegment 
+                    start={new Vector3(-4, -1, 0)} 
+                    end={new Vector3(4, -1, 0)} 
+                  />
+                  
+                  {/* Vertical connecting wires */}
+                  <WireSegment 
+                    start={new Vector3(-4, 1, 0)} 
+                    end={new Vector3(-4, -1, 0)} 
+                  />
+                  <WireSegment 
+                    start={new Vector3(4, 1, 0)} 
+                    end={new Vector3(4, -1, 0)} 
+                  />
+                  
+                  {/* Battery symbol */}
+                  <BatterySymbol 
+                    value={simpleVoltage[0]} 
+                    position={new Vector3(-2, 1, 0)} 
+                  />
+                  
+                  {/* Resistor symbol */}
+                  <ResistorSymbol 
+                    value={simpleResistance[0]} 
+                    position={new Vector3(2, 1, 0)} 
+                  />
                 </group>
               </>
             ) : (

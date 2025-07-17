@@ -2,7 +2,7 @@ export interface PhysicsConcept {
   id: string;
   name: string;
   description: string;
-  category: 'electrostatics' | 'current_electricity';
+  category: 'electrostatics' | 'current_electricity' | 'rotational_motion';
   theory: string;
   applications: string[];
 }
@@ -55,5 +55,37 @@ export const physicsConcepts: PhysicsConcept[] = [
     category: 'current_electricity',
     theory: 'A current-carrying conductor produces a magnetic field around it. The direction follows the right-hand rule.',
     applications: ['Electromagnets', 'Motors', 'Transformers', 'MRI machines']
+  },
+  {
+    id: 'angular-momentum',
+    name: 'Angular Momentum',
+    description: 'Interactive visualization of angular momentum conservation in rotating systems',
+    category: 'rotational_motion',
+    theory: 'Angular momentum is conserved in the absence of external torques. L = I × ω, where I is moment of inertia and ω is angular velocity.',
+    applications: ['Gyroscopes', 'Figure skating', 'Satellite stabilization', 'Turbines']
+  },
+  {
+    id: 'moment-of-inertia',
+    name: 'Moment of Inertia',
+    description: 'Demonstration of how mass distribution affects rotational motion',
+    category: 'rotational_motion',
+    theory: 'Moment of inertia quantifies the resistance of a body to rotational acceleration. I = Σmr², where m is mass and r is distance from axis.',
+    applications: ['Flywheel design', 'Sports equipment', 'Mechanical engineering', 'Astronomy']
+  },
+  {
+    id: 'torque-rotation',
+    name: 'Torque and Rotation',
+    description: 'Interactive visualization of torque effects on rotational motion',
+    category: 'rotational_motion',
+    theory: 'Torque is the rotational equivalent of force. τ = F × r × sin(θ), where F is force, r is distance, and θ is angle.',
+    applications: ['Wrenches', 'Motors', 'Lever systems', 'Propellers']
+  },
+  {
+    id: 'rolling-motion',
+    name: 'Rolling Motion',
+    description: 'Visualization of objects rolling without slipping',
+    category: 'rotational_motion',
+    theory: 'Rolling motion combines translational and rotational motion. For rolling without slipping: v = ωr.',
+    applications: ['Vehicle wheels', 'Ball bearings', 'Conveyor belts', 'Gear systems']
   }
 ];
