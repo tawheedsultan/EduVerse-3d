@@ -28,12 +28,16 @@ const DraggableCharge = ({
   charge, 
   index, 
   onChargeMove, 
-  onChargeMagnitudeChange 
+  onChargeMagnitudeChange,
+  onDragStart,
+  onDragEnd
 }: { 
   charge: Charge, 
   index: number, 
   onChargeMove: (index: number, position: Vector3) => void,
-  onChargeMagnitudeChange: (index: number, magnitude: number) => void
+  onChargeMagnitudeChange: (index: number, magnitude: number) => void,
+  onDragStart: () => void,
+  onDragEnd: () => void
 }) => {
   const meshRef = useRef<any>();
   const [isDragging, setIsDragging] = useState(false);
@@ -43,6 +47,7 @@ const DraggableCharge = ({
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
     setIsDragging(true);
+    onDragStart();
     gl.domElement.style.cursor = 'grabbing';
   };
 
@@ -70,6 +75,7 @@ const DraggableCharge = ({
 
   const handlePointerUp = () => {
     setIsDragging(false);
+    onDragEnd();
     gl.domElement.style.cursor = 'default';
   };
 
@@ -286,6 +292,7 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
   const [showFieldLines, setShowFieldLines] = useState(true);
   const [showForceVectors, setShowForceVectors] = useState(true);
   const [animationSpeed, setAnimationSpeed] = useState([0.5]);
+  const [isAnyChargeDragging, setIsAnyChargeDragging] = useState(false);
 
   const addCharge = (positive: boolean) => {
     const newCharge: Charge = {
@@ -347,6 +354,8 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
                   newCharges[index].color = magnitude > 0 ? '#ef4444' : '#3b82f6';
                   setCharges(newCharges);
                 }}
+                onDragStart={() => setIsAnyChargeDragging(true)}
+                onDragEnd={() => setIsAnyChargeDragging(false)}
               />
             ))}
             
@@ -359,7 +368,11 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
             {/* Grid for reference */}
             <gridHelper args={[10, 10, '#333333', '#333333']} rotation={[Math.PI / 2, 0, 0]} />
             
-            <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+            <OrbitControls 
+              enablePan={!isAnyChargeDragging} 
+              enableZoom={!isAnyChargeDragging} 
+              enableRotate={!isAnyChargeDragging} 
+            />
           </Canvas>
         </div>
 
