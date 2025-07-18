@@ -157,8 +157,8 @@ const ForceVectors = ({ charges }: { charges: Charge[] }) => {
                   charge1.position,
                   new Vector3().addVectors(charge1.position, forceDirection1.multiplyScalar(forceScale))
                 ]}
-                color={charge1.magnitude * charge2.magnitude < 0 ? "#00ff00" : "#ff0000"}
-                lineWidth={3}
+                color={charge1.magnitude * charge2.magnitude < 0 ? "#00ff44" : "#ff3300"}
+                lineWidth={4}
               />
               
               {/* Force vector on charge2 */}
@@ -167,8 +167,8 @@ const ForceVectors = ({ charges }: { charges: Charge[] }) => {
                   charge2.position,
                   new Vector3().addVectors(charge2.position, forceDirection2.multiplyScalar(forceScale))
                 ]}
-                color={charge1.magnitude * charge2.magnitude < 0 ? "#00ff00" : "#ff0000"}
-                lineWidth={3}
+                color={charge1.magnitude * charge2.magnitude < 0 ? "#00ff44" : "#ff3300"}
+                lineWidth={4}
               />
             </group>
           );
@@ -226,8 +226,8 @@ const ElectricFieldLines = ({ charges, showFieldLines }: { charges: Charge[], sh
           <Line
             key={`field-${chargeIndex}-${i}`}
             points={points}
-            color="#ffff00"
-            lineWidth={1}
+            color="#ffdd00"
+            lineWidth={2}
             opacity={0.7}
             transparent
           />
@@ -286,8 +286,8 @@ const RealTimeCalculations = ({ charges }: { charges: Charge[] }) => {
 
 const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
   const [charges, setCharges] = useState<Charge[]>([
-    { id: '1', position: new Vector3(-2, 0, 0), magnitude: 1, color: '#ef4444' },
-    { id: '2', position: new Vector3(2, 0, 0), magnitude: -1, color: '#3b82f6' }
+    { id: '1', position: new Vector3(-2, 0, 0), magnitude: 1, color: '#ff0066' },
+    { id: '2', position: new Vector3(2, 0, 0), magnitude: -1, color: '#0099ff' }
   ]);
   const [showFieldLines, setShowFieldLines] = useState(true);
   const [showForceVectors, setShowForceVectors] = useState(true);
@@ -303,7 +303,7 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
         0
       ),
       magnitude: positive ? 1 : -1,
-      color: positive ? '#ef4444' : '#3b82f6'
+      color: positive ? '#ff0066' : '#0099ff'
     };
     setCharges([...charges, newCharge]);
   };
@@ -314,8 +314,8 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
 
   const resetCharges = () => {
     setCharges([
-      { id: '1', position: new Vector3(-2, 0, 0), magnitude: 1, color: '#ef4444' },
-      { id: '2', position: new Vector3(2, 0, 0), magnitude: -1, color: '#3b82f6' }
+      { id: '1', position: new Vector3(-2, 0, 0), magnitude: 1, color: '#ff0066' },
+      { id: '2', position: new Vector3(2, 0, 0), magnitude: -1, color: '#0099ff' }
     ]);
   };
 
@@ -351,7 +351,7 @@ const ElectrostaticsVisualization = ({ concept }: ElectrostaticsProps) => {
                 onChargeMagnitudeChange={(index, magnitude) => {
                   const newCharges = [...charges];
                   newCharges[index].magnitude = magnitude;
-                  newCharges[index].color = magnitude > 0 ? '#ef4444' : '#3b82f6';
+                  newCharges[index].color = magnitude > 0 ? '#ff0066' : '#0099ff';
                   setCharges(newCharges);
                 }}
                 onDragStart={() => setIsAnyChargeDragging(true)}

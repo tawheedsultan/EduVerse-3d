@@ -74,9 +74,9 @@ const ElectronFlow = ({
           <mesh key={i} position={[-circuitLength / 2 + i * (circuitLength / electronDensity), 0.1, 0]}>
             <sphereGeometry args={[electronSize]} />
             <meshPhongMaterial 
-              color="#3b82f6" 
-              emissive="#3b82f6" 
-              emissiveIntensity={0.3 + current * 0.1} 
+              color="#0099ff" 
+              emissive="#0099ff" 
+              emissiveIntensity={0.4 + current * 0.15} 
             />
           </mesh>
         ))}
@@ -89,9 +89,9 @@ const ElectronFlow = ({
             <mesh key={i} position={[circuitLength / 2 - i * (circuitLength / (electronDensity * 0.7)), -0.1, 0]}>
               <sphereGeometry args={[electronSize * 0.7]} />
               <meshPhongMaterial 
-                color="#ef4444" 
-                emissive="#ef4444" 
-                emissiveIntensity={0.3 + current * 0.1} 
+                color="#ff3366" 
+                emissive="#ff3366" 
+                emissiveIntensity={0.4 + current * 0.15} 
               />
             </mesh>
           ))}
@@ -106,21 +106,21 @@ const BatterySymbol = ({ value, position }: { value: number, position: Vector3 }
     <group position={position}>
       {/* Long terminal */}
       <mesh position={[0, 0.3, 0]}>
-        <boxGeometry args={[0.05, 0.6, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+        <boxGeometry args={[0.08, 0.6, 0.15]} />
+        <meshPhongMaterial color="#222222" emissive="#444444" emissiveIntensity={0.1} />
       </mesh>
       {/* Short terminal */}
       <mesh position={[0, -0.3, 0]}>
-        <boxGeometry args={[0.05, 0.3, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+        <boxGeometry args={[0.08, 0.3, 0.15]} />
+        <meshPhongMaterial color="#222222" emissive="#444444" emissiveIntensity={0.1} />
       </mesh>
       {/* + symbol */}
-      <Html position={[0.2, 0.3, 0]}>
-        <div className="text-sm text-red-500 font-bold">+</div>
+      <Html position={[0.3, 0.3, 0]}>
+        <div className="text-base text-red-500 font-bold">+</div>
       </Html>
       {/* - symbol */}
-      <Html position={[0.2, -0.3, 0]}>
-        <div className="text-sm text-blue-500 font-bold">-</div>
+      <Html position={[0.3, -0.3, 0]}>
+        <div className="text-base text-blue-500 font-bold">-</div>
       </Html>
       {/* Value label */}
       <Html position={[0, -0.8, 0]}>
@@ -135,34 +135,34 @@ const BatterySymbol = ({ value, position }: { value: number, position: Vector3 }
 const ResistorSymbol = ({ value, position }: { value: number, position: Vector3 }) => {
   return (
     <group position={position}>
-      {/* Zigzag pattern for resistor */}
-      <mesh position={[-0.3, 0, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      {/* Enhanced zigzag pattern for resistor */}
+      <mesh position={[-0.4, 0, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[-0.2, 0.1, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[-0.25, 0.15, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[-0.1, -0.1, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[-0.1, -0.15, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[0, 0.1, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[0.05, 0.15, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[0.1, -0.1, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[0.2, -0.15, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[0.2, 0.1, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[0.35, 0.15, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
-      <mesh position={[0.3, 0, 0]}>
-        <boxGeometry args={[0.05, 0.05, 0.1]} />
-        <meshPhongMaterial color="#000000" />
+      <mesh position={[0.4, 0, 0]}>
+        <boxGeometry args={[0.06, 0.06, 0.12]} />
+        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
       </mesh>
       {/* Value label */}
       <Html position={[0, -0.5, 0]}>
@@ -174,15 +174,19 @@ const ResistorSymbol = ({ value, position }: { value: number, position: Vector3 
   );
 };
 
-const WireSegment = ({ start, end, color = "#000000" }: { start: Vector3, end: Vector3, color?: string }) => {
+const WireSegment = ({ start, end, color = "#ffcc00", isActive = false }: { start: Vector3, end: Vector3, color?: string, isActive?: boolean }) => {
   const direction = end.clone().sub(start);
   const length = direction.length();
   const center = start.clone().add(end).divideScalar(2);
   
   return (
     <mesh position={center}>
-      <cylinderGeometry args={[0.02, 0.02, length]} />
-      <meshPhongMaterial color={color} />
+      <cylinderGeometry args={[0.03, 0.03, length]} />
+      <meshPhongMaterial 
+        color={color} 
+        emissive={isActive ? color : "#000000"} 
+        emissiveIntensity={isActive ? 0.3 : 0} 
+      />
     </mesh>
   );
 };
@@ -214,24 +218,32 @@ const CircuitVisualization = ({
 
   return (
     <>
-      {/* Main horizontal wires */}
+      {/* Main horizontal wires - enhanced */}
       <WireSegment 
         start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
         end={new Vector3(circuitWidth/2, wireYOffset, 0)} 
+        color="#ffcc00"
+        isActive={isOn}
       />
       <WireSegment 
         start={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
         end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
+        color="#ffcc00"
+        isActive={isOn}
       />
       
-      {/* Vertical connecting wires */}
+      {/* Vertical connecting wires - enhanced */}
       <WireSegment 
         start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
         end={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
+        color="#ffcc00"
+        isActive={isOn}
       />
       <WireSegment 
         start={new Vector3(circuitWidth/2, wireYOffset, 0)} 
         end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
+        color="#ffcc00"
+        isActive={isOn}
       />
 
       {/* Render series components */}
@@ -355,9 +367,9 @@ const MagneticField = ({
           <Line
             key={i}
             points={points}
-            color="#00ff00"
-            lineWidth={2}
-            opacity={0.4 + (current * 0.1)}
+            color="#00ff88"
+            lineWidth={3}
+            opacity={0.5 + (current * 0.15)}
             transparent
           />
         );

@@ -49,7 +49,9 @@ const RotatingDisk = ({
       <mesh ref={diskRef}>
         <cylinderGeometry args={[diskRadius, diskRadius, 0.2, 32]} />
         <meshPhongMaterial 
-          color="#3b82f6" 
+          color="#0099ff" 
+          emissive="#0099ff"
+          emissiveIntensity={0.3}
           transparent 
           opacity={0.8} 
         />
@@ -57,15 +59,15 @@ const RotatingDisk = ({
       
       {/* Rotation axis */}
       <mesh>
-        <cylinderGeometry args={[0.05, 0.05, 4]} />
-        <meshPhongMaterial color="#64748b" />
+        <cylinderGeometry args={[0.08, 0.08, 4]} />
+        <meshPhongMaterial color="#666666" emissive="#444444" emissiveIntensity={0.2} />
       </mesh>
       
       {/* Angular velocity indicator */}
       {isPlaying && (
         <mesh position={[0, 0, 0.2]}>
-          <cylinderGeometry args={[0.1, 0.1, 0.1]} />
-          <meshPhongMaterial color="#ef4444" />
+          <cylinderGeometry args={[0.12, 0.12, 0.12]} />
+          <meshPhongMaterial color="#ff3366" emissive="#ff3366" emissiveIntensity={0.4} />
         </mesh>
       )}
       
@@ -73,8 +75,8 @@ const RotatingDisk = ({
       {showAngularMomentum && (
         <group position={[0, 0, 2]}>
           <mesh>
-            <cylinderGeometry args={[0.05, 0.05, Math.abs(angularMomentum) * 0.5]} />
-            <meshPhongMaterial color="#10b981" />
+            <cylinderGeometry args={[0.06, 0.06, Math.abs(angularMomentum) * 0.5]} />
+            <meshPhongMaterial color="#00ff66" emissive="#00ff66" emissiveIntensity={0.3} />
           </mesh>
           <Html>
             <div className="text-xs bg-green-500/80 text-white px-2 py-1 rounded">
@@ -127,13 +129,13 @@ const RollingObject = ({
       {/* Ground */}
       <mesh position={[0, -radius - 0.5, 0]}>
         <boxGeometry args={[20, 0.2, 4]} />
-        <meshPhongMaterial color="#8b5cf6" />
+        <meshPhongMaterial color="#9966ff" emissive="#9966ff" emissiveIntensity={0.2} />
       </mesh>
       
       {/* Rolling object */}
       <mesh ref={objectRef} position={[position, 0, 0]}>
         <sphereGeometry args={[radius]} />
-        <meshPhongMaterial color="#f59e0b" />
+        <meshPhongMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.3} />
       </mesh>
       
       {/* Trail */}
@@ -141,8 +143,8 @@ const RollingObject = ({
         <group>
           {trail.map((point, index) => (
             <mesh key={index} position={point}>
-              <sphereGeometry args={[0.02]} />
-              <meshPhongMaterial color="#ef4444" />
+              <sphereGeometry args={[0.03]} />
+              <meshPhongMaterial color="#ff3366" emissive="#ff3366" emissiveIntensity={0.4} />
             </mesh>
           ))}
         </group>
@@ -194,21 +196,21 @@ const TorqueVisualization = ({
     <group>
       {/* Pivot point */}
       <mesh>
-        <sphereGeometry args={[0.1]} />
-        <meshPhongMaterial color="#64748b" />
+        <sphereGeometry args={[0.12]} />
+        <meshPhongMaterial color="#666666" emissive="#444444" emissiveIntensity={0.2} />
       </mesh>
       
       {/* Lever arm */}
       <mesh ref={leverRef}>
-        <cylinderGeometry args={[0.05, 0.05, leverArm * 2]} />
-        <meshPhongMaterial color="#8b5cf6" />
+        <cylinderGeometry args={[0.06, 0.06, leverArm * 2]} />
+        <meshPhongMaterial color="#9966ff" emissive="#9966ff" emissiveIntensity={0.2} />
       </mesh>
       
       {/* Force vector */}
       <group position={[leverArm, 0, 0]}>
         <mesh>
-          <cylinderGeometry args={[0.02, 0.02, force * 0.5]} />
-          <meshPhongMaterial color="#ef4444" />
+          <cylinderGeometry args={[0.03, 0.03, force * 0.5]} />
+          <meshPhongMaterial color="#ff3366" emissive="#ff3366" emissiveIntensity={0.4} />
         </mesh>
         <Html>
           <div className="text-xs bg-red-500/80 text-white px-2 py-1 rounded">
