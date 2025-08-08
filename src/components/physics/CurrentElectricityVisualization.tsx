@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Html, Line } from '@react-three/drei';
 import { Vector3 } from 'three';
+import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -104,27 +105,32 @@ const ElectronFlow = ({
 const BatterySymbol = ({ value, position }: { value: number, position: Vector3 }) => {
   return (
     <group position={position}>
-      {/* Long terminal */}
-      <mesh position={[0, 0.3, 0]}>
-        <boxGeometry args={[0.08, 0.6, 0.15]} />
-        <meshPhongMaterial color="#222222" emissive="#444444" emissiveIntensity={0.1} />
+      {/* 3D Battery body */}
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.2, 0.2, 0.8]} />
+        <meshPhongMaterial color="#1a1a1a" emissive="#333333" emissiveIntensity={0.2} />
       </mesh>
-      {/* Short terminal */}
-      <mesh position={[0, -0.3, 0]}>
-        <boxGeometry args={[0.08, 0.3, 0.15]} />
-        <meshPhongMaterial color="#222222" emissive="#444444" emissiveIntensity={0.1} />
+      {/* Positive terminal */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.08, 0.08, 0.2]} />
+        <meshPhongMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={0.4} />
+      </mesh>
+      {/* Negative terminal */}
+      <mesh position={[0, -0.5, 0]}>
+        <cylinderGeometry args={[0.06, 0.06, 0.15]} />
+        <meshPhongMaterial color="#4444ff" emissive="#4444ff" emissiveIntensity={0.4} />
       </mesh>
       {/* + symbol */}
-      <Html position={[0.3, 0.3, 0]}>
-        <div className="text-base text-red-500 font-bold">+</div>
+      <Html position={[0.3, 0.5, 0]}>
+        <div className="text-lg text-red-400 font-bold">+</div>
       </Html>
       {/* - symbol */}
-      <Html position={[0.3, -0.3, 0]}>
-        <div className="text-base text-blue-500 font-bold">-</div>
+      <Html position={[0.3, -0.5, 0]}>
+        <div className="text-lg text-blue-400 font-bold">-</div>
       </Html>
       {/* Value label */}
-      <Html position={[0, -0.8, 0]}>
-        <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+      <Html position={[0, -1, 0]}>
+        <div className="text-sm bg-black/80 text-green-400 px-3 py-1 rounded font-bold">
           {value}V
         </div>
       </Html>
@@ -135,38 +141,40 @@ const BatterySymbol = ({ value, position }: { value: number, position: Vector3 }
 const ResistorSymbol = ({ value, position }: { value: number, position: Vector3 }) => {
   return (
     <group position={position}>
-      {/* Enhanced zigzag pattern for resistor */}
-      <mesh position={[-0.4, 0, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      {/* 3D Resistor body - cylindrical */}
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.12, 0.12, 0.6]} />
+        <meshPhongMaterial color="#8B4513" emissive="#CD853F" emissiveIntensity={0.3} />
       </mesh>
-      <mesh position={[-0.25, 0.15, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      {/* Resistor bands (color coding) */}
+      <mesh position={[0, 0, -0.15]}>
+        <cylinderGeometry args={[0.13, 0.13, 0.05]} />
+        <meshPhongMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.4} />
       </mesh>
-      <mesh position={[-0.1, -0.15, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      <mesh position={[0, 0, -0.05]}>
+        <cylinderGeometry args={[0.13, 0.13, 0.05]} />
+        <meshPhongMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.4} />
       </mesh>
-      <mesh position={[0.05, 0.15, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      <mesh position={[0, 0, 0.05]}>
+        <cylinderGeometry args={[0.13, 0.13, 0.05]} />
+        <meshPhongMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.4} />
       </mesh>
-      <mesh position={[0.2, -0.15, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      <mesh position={[0, 0, 0.15]}>
+        <cylinderGeometry args={[0.13, 0.13, 0.05]} />
+        <meshPhongMaterial color="#0088ff" emissive="#0088ff" emissiveIntensity={0.4} />
       </mesh>
-      <mesh position={[0.35, 0.15, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      {/* Wire leads */}
+      <mesh position={[0, 0.4, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 0.2]} />
+        <meshPhongMaterial color="#c0c0c0" emissive="#c0c0c0" emissiveIntensity={0.3} />
       </mesh>
-      <mesh position={[0.4, 0, 0]}>
-        <boxGeometry args={[0.06, 0.06, 0.12]} />
-        <meshPhongMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.2} />
+      <mesh position={[0, -0.4, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 0.2]} />
+        <meshPhongMaterial color="#c0c0c0" emissive="#c0c0c0" emissiveIntensity={0.3} />
       </mesh>
       {/* Value label */}
-      <Html position={[0, -0.5, 0]}>
-        <div className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+      <Html position={[0, -0.8, 0]}>
+        <div className="text-sm bg-black/80 text-orange-400 px-3 py-1 rounded font-bold">
           {value}Ω
         </div>
       </Html>
@@ -179,13 +187,19 @@ const WireSegment = ({ start, end, color = "#ffcc00", isActive = false }: { star
   const length = direction.length();
   const center = start.clone().add(end).divideScalar(2);
   
+  // Calculate rotation to align cylinder with wire direction
+  const quaternion = new THREE.Quaternion();
+  const up = new Vector3(0, 1, 0);
+  quaternion.setFromUnitVectors(up, direction.clone().normalize());
+  
   return (
-    <mesh position={center}>
-      <cylinderGeometry args={[0.03, 0.03, length]} />
+    <mesh position={center} quaternion={quaternion}>
+      <cylinderGeometry args={[0.05, 0.05, length]} />
       <meshPhongMaterial 
         color={color} 
-        emissive={isActive ? color : "#000000"} 
-        emissiveIntensity={isActive ? 0.3 : 0} 
+        emissive={isActive ? color : "#333333"} 
+        emissiveIntensity={isActive ? 0.5 : 0.1} 
+        shininess={100}
       />
     </mesh>
   );
@@ -482,12 +496,14 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
           </Select>
         </div>
 
-        {/* 3D Canvas */}
-        <div className="h-96 bg-gray-900 rounded-lg overflow-hidden">
-          <Canvas camera={{ position: [0, 3, 10], fov: 60 }}>
-            <ambientLight intensity={0.4} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-            <pointLight position={[-10, 10, 10]} intensity={0.5} />
+        {/* Enhanced 3D Canvas */}
+        <div className="h-[500px] bg-gray-900 rounded-lg overflow-hidden border-2 border-gray-700">
+          <Canvas camera={{ position: [0, 5, 12], fov: 60 }}>
+            <ambientLight intensity={0.3} />
+            <pointLight position={[10, 10, 10]} intensity={1.5} />
+            <pointLight position={[-10, 10, 10]} intensity={0.8} />
+            <pointLight position={[0, -10, 5]} intensity={0.5} />
+            <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
             
             {circuitMode === 'simple' ? (
               <>
@@ -551,9 +567,135 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
               current={isCircuitOn ? totalCurrent : 0}
             />
             
-            <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+            <OrbitControls 
+              enablePan={true} 
+              enableZoom={true} 
+              enableRotate={true} 
+              minDistance={5}
+              maxDistance={20}
+              maxPolarAngle={Math.PI / 1.5}
+            />
           </Canvas>
         </div>
+
+        {/* Interactive Circuit Builder Controls */}
+        {circuitMode === 'advanced' && (
+          <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
+            <h3 className="text-lg font-bold text-white mb-3">Circuit Builder</h3>
+            
+            {/* Add Component Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Component Type</label>
+                <Select value={nextComponentType} onValueChange={(value: 'resistor' | 'battery') => setNextComponentType(value)}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="resistor">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-orange-400" />
+                        Resistor
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="battery">
+                      <div className="flex items-center gap-2">
+                        <Battery className="w-4 h-4 text-green-400" />
+                        Battery
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  Value ({nextComponentType === 'battery' ? 'V' : 'Ω'})
+                </label>
+                <Slider
+                  value={nextComponentValue}
+                  onValueChange={setNextComponentValue}
+                  min={nextComponentType === 'battery' ? 1 : 0.5}
+                  max={nextComponentType === 'battery' ? 24 : 100}
+                  step={nextComponentType === 'battery' ? 1 : 0.5}
+                  className="w-full"
+                />
+                <div className="text-xs text-gray-400">
+                  {nextComponentValue[0]}{nextComponentType === 'battery' ? 'V' : 'Ω'}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Connection</label>
+                <Select value={nextComponentConnection} onValueChange={(value: 'series' | 'parallel') => setNextComponentConnection(value)}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="series">Series</SelectItem>
+                    <SelectItem value="parallel">Parallel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={addComponent} 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+                <Button 
+                  onClick={resetCircuit} 
+                  variant="outline"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+
+            {/* Component List */}
+            <div className="space-y-2">
+              <h4 className="text-md font-semibold text-gray-300">Circuit Components</h4>
+              <div className="grid gap-2 max-h-40 overflow-y-auto">
+                {components.map((component) => (
+                  <div key={component.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {component.type === 'battery' ? (
+                        <Battery className="w-5 h-5 text-green-400" />
+                      ) : (
+                        <Zap className="w-5 h-5 text-orange-400" />
+                      )}
+                      <div>
+                        <div className="text-white font-medium">
+                          {component.type === 'battery' ? 'Battery' : 'Resistor'}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {component.value}{component.type === 'battery' ? 'V' : 'Ω'} • {component.connection}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={component.connection === 'series' ? 'default' : 'secondary'}>
+                        {component.connection}
+                      </Badge>
+                      <Button
+                        onClick={() => removeComponent(component.id)}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="space-y-4">
