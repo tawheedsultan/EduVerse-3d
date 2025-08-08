@@ -28,71 +28,108 @@ interface CurrentElectricityProps {
   };
 }
 
+interface WirePoint {
+  id: string;
+  position: Vector3;
+  connections: string[];
+}
+
 const ElectronFlow = ({ 
   isOn, 
   speed, 
   showConventional,
   current,
-  circuitLength
+  wirePoints
 }: { 
   isOn: boolean, 
   speed: number, 
   showConventional: boolean,
   current: number,
-  circuitLength: number
+  wirePoints: WirePoint[]
 }) => {
   const electronsRef = useRef<any>();
   const conventionalRef = useRef<any>();
   
   useFrame((state) => {
-    if (isOn && electronsRef.current) {
+    if (isOn && electronsRef.current && wirePoints.length >= 4) {
+      const time = state.clock.elapsedTime;
+      
       electronsRef.current.children.forEach((electron: any, index: number) => {
-        electron.position.x += speed * 0.02 * current;
-        if (electron.position.x > circuitLength / 2) {
-          electron.position.x = -circuitLength / 2;
-        }
+        // Calculate progress along the circuit path (0 to 1)
+        const baseProgress = (time * speed * 0.3 + index * 0.1) % 1;
+        const position = getPositionOnCircuitPath(baseProgress, wirePoints);
+        
+        electron.position.copy(position);
       });
     }
     
-    if (isOn && showConventional && conventionalRef.current) {
+    if (isOn && showConventional && conventionalRef.current && wirePoints.length >= 4) {
+      const time = state.clock.elapsedTime;
+      
       conventionalRef.current.children.forEach((particle: any, index: number) => {
-        particle.position.x -= speed * 0.02 * current;
-        if (particle.position.x < -circuitLength / 2) {
-          particle.position.x = circuitLength / 2;
-        }
+        // Conventional current moves in opposite direction
+        const baseProgress = (-time * speed * 0.3 - index * 0.1) % 1;
+        const normalizedProgress = baseProgress < 0 ? 1 + baseProgress : baseProgress;
+        const position = getPositionOnCircuitPath(normalizedProgress, wirePoints);
+        
+        particle.position.copy(position);
       });
     }
   });
 
-  const electronDensity = Math.max(10, Math.min(50, current * 8));
-  const electronSize = Math.max(0.02, Math.min(0.06, current * 0.015));
+  // Get position along the circuit path
+  const getPositionOnCircuitPath = (progress: number, points: WirePoint[]): Vector3 => {
+    if (points.length < 4) return new Vector3(0, 0, 0);
+    
+    // Create a closed loop path: top-right -> bottom-right -> bottom-left -> top-left -> back to top-right
+    const pathPoints = [
+      points[0], // top-left
+      points[1], // top-right  
+      points[2], // bottom-right
+      points[3], // bottom-left
+      points[0]  // back to top-left to close the loop
+    ];
+    
+    const totalSegments = pathPoints.length - 1;
+    const segmentProgress = progress * totalSegments;
+    const currentSegment = Math.floor(segmentProgress) % totalSegments;
+    const localProgress = segmentProgress - Math.floor(segmentProgress);
+    
+    const startPoint = pathPoints[currentSegment];
+    const endPoint = pathPoints[(currentSegment + 1) % pathPoints.length];
+    
+    return startPoint.position.clone().lerp(endPoint.position, localProgress);
+  };
+
+  const electronDensity = Math.max(10, Math.min(30, current * 6));
+  const electronSize = Math.max(0.03, Math.min(0.08, current * 0.02));
 
   return (
     <>
-      {/* Electrons (blue, moving right) */}
+      {/* Electrons (blue, following circuit path) */}
       <group ref={electronsRef}>
         {Array.from({ length: Math.floor(electronDensity) }, (_, i) => (
-          <mesh key={i} position={[-circuitLength / 2 + i * (circuitLength / electronDensity), 0.1, 0]}>
+          <mesh key={i}>
             <sphereGeometry args={[electronSize]} />
             <meshPhongMaterial 
-              color="#0099ff" 
-              emissive="#0099ff" 
-              emissiveIntensity={0.4 + current * 0.15} 
+              color="#00aaff" 
+              emissive="#00aaff" 
+              emissiveIntensity={0.5 + current * 0.2} 
             />
           </mesh>
         ))}
       </group>
       
-      {/* Conventional current (red, moving left) */}
+      {/* Conventional current (red, following circuit path in opposite direction) */}
       {showConventional && (
         <group ref={conventionalRef}>
-          {Array.from({ length: Math.floor(electronDensity * 0.7) }, (_, i) => (
-            <mesh key={i} position={[circuitLength / 2 - i * (circuitLength / (electronDensity * 0.7)), -0.1, 0]}>
-              <sphereGeometry args={[electronSize * 0.7]} />
+          {Array.from({ length: Math.floor(electronDensity * 0.6) }, (_, i) => (
+            <mesh key={i}>
+              <sphereGeometry args={[electronSize * 0.8]} />
               <meshPhongMaterial 
-                color="#ff3366" 
-                emissive="#ff3366" 
-                emissiveIntensity={0.4 + current * 0.15} 
+                color="#ff4466" 
+                emissive="#ff4466" 
+                emissiveIntensity={0.5 + current * 0.2} 
               />
             </mesh>
           ))}
@@ -194,13 +231,64 @@ const WireSegment = ({ start, end, color = "#ffcc00", isActive = false }: { star
   
   return (
     <mesh position={center} quaternion={quaternion}>
-      <cylinderGeometry args={[0.05, 0.05, length]} />
+      <cylinderGeometry args={[0.06, 0.06, length]} />
       <meshPhongMaterial 
         color={color} 
-        emissive={isActive ? color : "#333333"} 
-        emissiveIntensity={isActive ? 0.5 : 0.1} 
-        shininess={100}
+        emissive={isActive ? color : "#444444"} 
+        emissiveIntensity={isActive ? 0.6 : 0.15} 
+        shininess={120}
       />
+    </mesh>
+  );
+};
+
+const InteractiveWirePoint = ({ 
+  point, 
+  onDrag, 
+  isSelected, 
+  onSelect 
+}: { 
+  point: WirePoint, 
+  onDrag: (id: string, newPosition: Vector3) => void,
+  isSelected: boolean,
+  onSelect: (id: string) => void
+}) => {
+  const meshRef = useRef<any>();
+  const [isDragging, setIsDragging] = useState(false);
+
+  return (
+    <mesh 
+      ref={meshRef}
+      position={point.position}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(point.id);
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        setIsDragging(true);
+      }}
+      onPointerMove={(e) => {
+        if (isDragging) {
+          const newPosition = new Vector3(e.point.x, e.point.y, 0);
+          onDrag(point.id, newPosition);
+        }
+      }}
+      onPointerUp={() => setIsDragging(false)}
+    >
+      <sphereGeometry args={[0.12]} />
+      <meshPhongMaterial 
+        color={isSelected ? "#00ff88" : "#ffaa00"} 
+        emissive={isSelected ? "#00ff88" : "#ffaa00"} 
+        emissiveIntensity={isSelected ? 0.7 : 0.4}
+        transparent
+        opacity={0.8}
+      />
+      <Html position={[0, 0.3, 0]}>
+        <div className="text-xs bg-black/80 text-white px-2 py-1 rounded pointer-events-none">
+          {point.id}
+        </div>
+      </Html>
     </mesh>
   );
 };
@@ -210,13 +298,21 @@ const CircuitVisualization = ({
   isOn, 
   totalVoltage, 
   totalCurrent, 
-  equivalentResistance 
+  equivalentResistance,
+  wirePoints,
+  onWirePointDrag,
+  selectedWirePoint,
+  onWirePointSelect
 }: { 
   components: CircuitComponent[], 
   isOn: boolean, 
   totalVoltage: number,
   totalCurrent: number,
-  equivalentResistance: number
+  equivalentResistance: number,
+  wirePoints: WirePoint[],
+  onWirePointDrag: (id: string, newPosition: Vector3) => void,
+  selectedWirePoint: string | null,
+  onWirePointSelect: (id: string) => void
 }) => {
   const batteries = components.filter(c => c.type === 'battery');
   const resistors = components.filter(c => c.type === 'resistor');
@@ -230,35 +326,50 @@ const CircuitVisualization = ({
   const seriesSpacing = circuitWidth / (seriesComponents.length + 1);
   const parallelSpacing = circuitWidth * 0.6 / (parallelComponents.length + 1);
 
+  // Get wire points for drawing segments
+  const topLeft = wirePoints.find(p => p.id === 'tl')?.position || new Vector3(-circuitWidth/2, wireYOffset, 0);
+  const topRight = wirePoints.find(p => p.id === 'tr')?.position || new Vector3(circuitWidth/2, wireYOffset, 0);
+  const bottomRight = wirePoints.find(p => p.id === 'br')?.position || new Vector3(circuitWidth/2, -wireYOffset, 0);
+  const bottomLeft = wirePoints.find(p => p.id === 'bl')?.position || new Vector3(-circuitWidth/2, -wireYOffset, 0);
+
   return (
     <>
-      {/* Main horizontal wires - enhanced */}
+      {/* Interactive wire segments forming the circuit loop */}
       <WireSegment 
-        start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
-        end={new Vector3(circuitWidth/2, wireYOffset, 0)} 
-        color="#ffcc00"
+        start={topLeft} 
+        end={topRight} 
+        color="#ffdd00"
         isActive={isOn}
       />
       <WireSegment 
-        start={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
-        end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
-        color="#ffcc00"
-        isActive={isOn}
-      />
-      
-      {/* Vertical connecting wires - enhanced */}
-      <WireSegment 
-        start={new Vector3(-circuitWidth/2, wireYOffset, 0)} 
-        end={new Vector3(-circuitWidth/2, -wireYOffset, 0)} 
-        color="#ffcc00"
+        start={topRight} 
+        end={bottomRight} 
+        color="#ffdd00"
         isActive={isOn}
       />
       <WireSegment 
-        start={new Vector3(circuitWidth/2, wireYOffset, 0)} 
-        end={new Vector3(circuitWidth/2, -wireYOffset, 0)} 
-        color="#ffcc00"
+        start={bottomRight} 
+        end={bottomLeft} 
+        color="#ffdd00"
         isActive={isOn}
       />
+      <WireSegment 
+        start={bottomLeft} 
+        end={topLeft} 
+        color="#ffdd00"
+        isActive={isOn}
+      />
+
+      {/* Interactive wire points */}
+      {wirePoints.map(point => (
+        <InteractiveWirePoint
+          key={point.id}
+          point={point}
+          onDrag={onWirePointDrag}
+          isSelected={selectedWirePoint === point.id}
+          onSelect={onWirePointSelect}
+        />
+      ))}
 
       {/* Render series components */}
       {seriesComponents.map((component, index) => {
@@ -293,10 +404,14 @@ const CircuitVisualization = ({
             <WireSegment 
               start={new Vector3(xPosition, wireYOffset, 0)} 
               end={new Vector3(xPosition, yPosition + 0.5, 0)} 
+              color="#ffdd00"
+              isActive={isOn}
             />
             <WireSegment 
               start={new Vector3(xPosition, yPosition - 0.5, 0)} 
               end={new Vector3(xPosition, -wireYOffset, 0)} 
+              color="#ffdd00"
+              isActive={isOn}
             />
             
             {component.type === 'battery' ? (
@@ -314,21 +429,32 @@ const CircuitVisualization = ({
         );
       })}
 
+      {/* Current flow visualization */}
+      {isOn && (
+        <ElectronFlow 
+          isOn={isOn}
+          speed={1}
+          showConventional={true}
+          current={totalCurrent}
+          wirePoints={wirePoints}
+        />
+      )}
+
       {/* Circuit measurements */}
       {isOn && (
         <>
-          <Html position={[0, 2.5, 0]}>
-            <div className="text-lg font-bold text-green-500 bg-black/70 px-3 py-2 rounded">
+          <Html position={[0, 3, 0]}>
+            <div className="text-lg font-bold text-green-400 bg-black/80 px-3 py-2 rounded">
               Current: {totalCurrent.toFixed(2)}A
             </div>
           </Html>
-          <Html position={[circuitWidth/2 - 1, -2.5, 0]}>
-            <div className="text-sm text-red-500 bg-black/70 px-2 py-1 rounded">
+          <Html position={[circuitWidth/2 - 1, -3, 0]}>
+            <div className="text-sm text-red-400 bg-black/80 px-2 py-1 rounded">
               Voltage: {totalVoltage}V
             </div>
           </Html>
-          <Html position={[-circuitWidth/2 + 1, -2.5, 0]}>
-            <div className="text-sm text-blue-500 bg-black/70 px-2 py-1 rounded">
+          <Html position={[-circuitWidth/2 + 1, -3, 0]}>
+            <div className="text-sm text-blue-400 bg-black/80 px-2 py-1 rounded">
               Resistance: {equivalentResistance.toFixed(2)}Ω
             </div>
           </Html>
@@ -337,14 +463,14 @@ const CircuitVisualization = ({
 
       {/* Connection type indicators */}
       {seriesComponents.length > 0 && (
-        <Html position={[0, -3, 0]}>
+        <Html position={[0, -3.5, 0]}>
           <div className="text-xs bg-blue-500/80 text-white px-2 py-1 rounded">
             Series: {seriesComponents.length} components
           </div>
         </Html>
       )}
       {parallelComponents.length > 0 && (
-        <Html position={[0, -3.5, 0]}>
+        <Html position={[0, -4, 0]}>
           <div className="text-xs bg-green-500/80 text-white px-2 py-1 rounded">
             Parallel: {parallelComponents.length} components
           </div>
@@ -411,6 +537,15 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
   const [nextComponentType, setNextComponentType] = useState<'resistor' | 'battery'>('resistor');
   const [nextComponentValue, setNextComponentValue] = useState([5]);
   const [nextComponentConnection, setNextComponentConnection] = useState<'series' | 'parallel'>('series');
+  
+  // Wire points for interactive circuit modification
+  const [wirePoints, setWirePoints] = useState<WirePoint[]>([
+    { id: 'tl', position: new Vector3(-4, 1.5, 0), connections: ['tr', 'bl'] },
+    { id: 'tr', position: new Vector3(4, 1.5, 0), connections: ['tl', 'br'] },
+    { id: 'br', position: new Vector3(4, -1.5, 0), connections: ['tr', 'bl'] },
+    { id: 'bl', position: new Vector3(-4, -1.5, 0), connections: ['br', 'tl'] }
+  ]);
+  const [selectedWirePoint, setSelectedWirePoint] = useState<string | null>(null);
 
   // Calculate circuit properties
   const calculateCircuitProperties = () => {
@@ -469,6 +604,58 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
       { id: '1', type: 'battery', value: 12, position: new Vector3(-2, 0, 0), connection: 'series' },
       { id: '2', type: 'resistor', value: 4, position: new Vector3(2, 0, 0), connection: 'series' }
     ]);
+    setWirePoints([
+      { id: 'tl', position: new Vector3(-4, 1.5, 0), connections: ['tr', 'bl'] },
+      { id: 'tr', position: new Vector3(4, 1.5, 0), connections: ['tl', 'br'] },
+      { id: 'br', position: new Vector3(4, -1.5, 0), connections: ['tr', 'bl'] },
+      { id: 'bl', position: new Vector3(-4, -1.5, 0), connections: ['br', 'tl'] }
+    ]);
+  };
+
+  const handleWirePointDrag = (id: string, newPosition: Vector3) => {
+    setWirePoints(prev => prev.map(point => 
+      point.id === id ? { ...point, position: newPosition } : point
+    ));
+  };
+
+  const handleWirePointSelect = (id: string) => {
+    setSelectedWirePoint(selectedWirePoint === id ? null : id);
+  };
+
+  const extendWire = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!selectedWirePoint) return;
+    
+    setWirePoints(prev => prev.map(point => {
+      if (point.id === selectedWirePoint) {
+        const offset = 0.5;
+        const newPosition = point.position.clone();
+        
+        switch (direction) {
+          case 'up': newPosition.y += offset; break;
+          case 'down': newPosition.y -= offset; break;
+          case 'left': newPosition.x -= offset; break;
+          case 'right': newPosition.x += offset; break;
+        }
+        
+        return { ...point, position: newPosition };
+      }
+      return point;
+    }));
+  };
+
+  const addWirePoint = () => {
+    if (!selectedWirePoint) return;
+    
+    const currentPoint = wirePoints.find(p => p.id === selectedWirePoint);
+    if (!currentPoint) return;
+    
+    const newPoint: WirePoint = {
+      id: `wp-${Date.now()}`,
+      position: currentPoint.position.clone().add(new Vector3(1, 0, 0)),
+      connections: [selectedWirePoint]
+    };
+    
+    setWirePoints(prev => [...prev, newPoint]);
   };
 
   const circuitWidth = Math.max(8, components.length * 1.5);
@@ -549,16 +736,25 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
                 totalVoltage={totalVoltage}
                 totalCurrent={totalCurrent}
                 equivalentResistance={equivalentResistance}
+                wirePoints={wirePoints}
+                onWirePointDrag={handleWirePointDrag}
+                selectedWirePoint={selectedWirePoint}
+                onWirePointSelect={handleWirePointSelect}
               />
             )}
             
-            {isCircuitOn && (
+            {isCircuitOn && circuitMode === 'simple' && (
               <ElectronFlow 
                 isOn={isCircuitOn} 
                 speed={currentSpeed[0]} 
                 showConventional={showConventional}
                 current={totalCurrent}
-                circuitLength={circuitMode === 'simple' ? 8 : circuitWidth}
+                wirePoints={[
+                  { id: 'tl', position: new Vector3(-4, 1, 0), connections: [] },
+                  { id: 'tr', position: new Vector3(4, 1, 0), connections: [] },
+                  { id: 'br', position: new Vector3(4, -1, 0), connections: [] },
+                  { id: 'bl', position: new Vector3(-4, -1, 0), connections: [] }
+                ]}
               />
             )}
             
@@ -578,10 +774,58 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
           </Canvas>
         </div>
 
-        {/* Interactive Circuit Builder Controls */}
+        {/* Wire Control Panel */}
         {circuitMode === 'advanced' && (
           <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-3">Circuit Builder</h3>
+            <h3 className="text-lg font-bold text-white mb-3">Interactive Circuit Designer</h3>
+            
+            {/* Wire Modification Controls */}
+            <div className="space-y-3">
+              <h4 className="text-md font-semibold text-gray-300">Wire Controls</h4>
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  onClick={() => extendWire('up')} 
+                  disabled={!selectedWirePoint}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  ↑ Extend Up
+                </Button>
+                <Button 
+                  onClick={() => extendWire('down')} 
+                  disabled={!selectedWirePoint}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  ↓ Extend Down
+                </Button>
+                <Button 
+                  onClick={() => extendWire('left')} 
+                  disabled={!selectedWirePoint}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  ← Extend Left
+                </Button>
+                <Button 
+                  onClick={() => extendWire('right')} 
+                  disabled={!selectedWirePoint}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  → Extend Right
+                </Button>
+                <Button 
+                  onClick={addWirePoint} 
+                  disabled={!selectedWirePoint}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Point
+                </Button>
+              </div>
+              {selectedWirePoint && (
+                <div className="text-sm text-green-400">
+                  Selected: {selectedWirePoint} - Click wire points to select/deselect
+                </div>
+              )}
+            </div>
             
             {/* Add Component Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
