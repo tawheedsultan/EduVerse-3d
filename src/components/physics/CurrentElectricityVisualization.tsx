@@ -246,12 +246,16 @@ const InteractiveWirePoint = ({
   point, 
   onDrag, 
   isSelected, 
-  onSelect 
+  onSelect,
+  onAdjustStart,
+  onAdjustEnd
 }: { 
   point: WirePoint, 
   onDrag: (id: string, newPosition: Vector3) => void,
   isSelected: boolean,
-  onSelect: (id: string) => void
+  onSelect: (id: string) => void,
+  onAdjustStart: () => void,
+  onAdjustEnd: () => void
 }) => {
   const meshRef = useRef<any>();
   const [isDragging, setIsDragging] = useState(false);
@@ -268,6 +272,7 @@ const InteractiveWirePoint = ({
         onPointerDown={(e) => {
           e.stopPropagation();
           setIsDragging(true);
+          onAdjustStart();
         }}
         onPointerMove={(e) => {
           if (isDragging) {
@@ -275,7 +280,10 @@ const InteractiveWirePoint = ({
             onDrag(point.id, newPosition);
           }
         }}
-        onPointerUp={() => setIsDragging(false)}
+        onPointerUp={() => {
+          setIsDragging(false);
+          onAdjustEnd();
+        }}
       >
         <sphereGeometry args={[0.15]} />
         <meshPhongMaterial 
@@ -315,7 +323,9 @@ const CircuitVisualization = ({
   wirePoints,
   onWirePointDrag,
   selectedWirePoint,
-  onWirePointSelect
+  onWirePointSelect,
+  onAdjustStart,
+  onAdjustEnd
 }: { 
   components: CircuitComponent[], 
   isOn: boolean, 
@@ -325,7 +335,9 @@ const CircuitVisualization = ({
   wirePoints: WirePoint[],
   onWirePointDrag: (id: string, newPosition: Vector3) => void,
   selectedWirePoint: string | null,
-  onWirePointSelect: (id: string) => void
+  onWirePointSelect: (id: string) => void,
+  onAdjustStart: () => void,
+  onAdjustEnd: () => void
 }) => {
   const batteries = components.filter(c => c.type === 'battery');
   const resistors = components.filter(c => c.type === 'resistor');
@@ -345,6 +357,8 @@ const CircuitVisualization = ({
   const bottomRight = wirePoints.find(p => p.id === 'br')?.position || new Vector3(circuitWidth/2, -wireYOffset, 0);
   const bottomLeft = wirePoints.find(p => p.id === 'bl')?.position || new Vector3(-circuitWidth/2, -wireYOffset, 0);
 
+  // Local UI state for constrained handle dragging
+  const [draggingHandle, setDraggingHandle] = useState<'left' | 'right' | null>(null);
   return (
     <>
       {/* Interactive wire segments forming the circuit loop */}
@@ -381,10 +395,52 @@ const CircuitVisualization = ({
           onDrag={onWirePointDrag}
           isSelected={selectedWirePoint === point.id}
           onSelect={onWirePointSelect}
+          onAdjustStart={onAdjustStart}
+          onAdjustEnd={onAdjustEnd}
         />
       ))}
 
-      {/* Render series components */}
+      {/* Length control handles on top wire (constrained horizontally) */}
+      <group>
+        {/* Left handle (controls TL.x) */}
+        <mesh
+          position={[topLeft.x, topLeft.y, 0]}
+          onPointerDown={(e) => { e.stopPropagation(); onAdjustStart(); }}
+          onPointerMove={(e) => {
+            if (e.buttons === 1) {
+              const newX = Math.min(e.point.x, topRight.x - 0.2);
+              onWirePointDrag('tl', new Vector3(newX, topLeft.y, 0));
+            }
+          }}
+          onPointerUp={(e) => { e.stopPropagation(); onAdjustEnd(); }}
+        >
+          <sphereGeometry args={[0.18]} />
+          <meshPhongMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={0.7} />
+        </mesh>
+        {/* Right handle (controls TR.x) */}
+        <mesh
+          position={[topRight.x, topRight.y, 0]}
+          onPointerDown={(e) => { e.stopPropagation(); onAdjustStart(); }}
+          onPointerMove={(e) => {
+            if (e.buttons === 1) {
+              const newX = Math.max(e.point.x, topLeft.x + 0.2);
+              onWirePointDrag('tr', new Vector3(newX, topRight.y, 0));
+            }
+          }}
+          onPointerUp={(e) => { e.stopPropagation(); onAdjustEnd(); }}
+        >
+          <sphereGeometry args={[0.18]} />
+          <meshPhongMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={0.7} />
+        </mesh>
+
+        {/* Top wire length display */}
+        <Html position={[(topLeft.x + topRight.x) / 2, topLeft.y + 0.6, 0]}>
+          <div className="text-xs bg-black/80 text-cyan-300 px-2 py-1 rounded font-mono">
+            Length: {(topRight.x - topLeft.x).toFixed(2)}
+          </div>
+        </Html>
+      </group>
+
       {seriesComponents.map((component, index) => {
         const xPosition = -circuitWidth/2 + (index + 1) * seriesSpacing;
         const yPosition = wireYOffset;
@@ -537,6 +593,7 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
   const [showConventional, setShowConventional] = useState(true);
   const [showMagneticField, setShowMagneticField] = useState(false);
   const [circuitMode, setCircuitMode] = useState<'simple' | 'advanced'>('simple');
+  const [isAdjusting, setIsAdjusting] = useState(false);
   
   // Simple circuit states
   const [simpleVoltage, setSimpleVoltage] = useState([12]);
@@ -671,6 +728,13 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
     setWirePoints(prev => [...prev, newPoint]);
   };
 
+  const deleteSelectedWirePoint = () => {
+    if (!selectedWirePoint) return;
+    if (['tl', 'tr', 'br', 'bl'].includes(selectedWirePoint)) return;
+    setWirePoints(prev => prev.filter(p => p.id !== selectedWirePoint));
+    setSelectedWirePoint(null);
+  };
+
   const circuitWidth = Math.max(8, components.length * 1.5);
 
   return (
@@ -753,6 +817,8 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
                 onWirePointDrag={handleWirePointDrag}
                 selectedWirePoint={selectedWirePoint}
                 onWirePointSelect={handleWirePointSelect}
+                onAdjustStart={() => setIsAdjusting(true)}
+                onAdjustEnd={() => setIsAdjusting(false)}
               />
             )}
             
@@ -777,9 +843,10 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
             />
             
             <OrbitControls 
-              enablePan={true} 
-              enableZoom={true} 
-              enableRotate={true} 
+              enabled={!isAdjusting}
+              enablePan={!isAdjusting}
+              enableZoom={!isAdjusting}
+              enableRotate={!isAdjusting}
               minDistance={5}
               maxDistance={20}
               maxPolarAngle={Math.PI / 1.5}
@@ -832,10 +899,18 @@ const CurrentElectricityVisualization = ({ concept }: CurrentElectricityProps) =
                   <Plus className="w-4 h-4 mr-2" />
                   Add Point
                 </Button>
+                <Button
+                  onClick={deleteSelectedWirePoint}
+                  disabled={!selectedWirePoint || ['tl','tr','br','bl'].includes(selectedWirePoint)}
+                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Selected Point
+                </Button>
               </div>
               {selectedWirePoint && (
                 <div className="text-sm text-green-400">
-                  Selected: {selectedWirePoint} - Click wire points to select/deselect
+                  Selected: {selectedWirePoint} • Drag points or use buttons to adjust. Orientation locks while adjusting.
                 </div>
               )}
             </div>
