@@ -344,8 +344,8 @@ const CircuitVisualization = ({
   const seriesComponents = components.filter(c => c.connection === 'series');
   const parallelComponents = components.filter(c => c.connection === 'parallel');
 
-  const circuitWidth = Math.max(6, components.length * 2);
-  const wireYOffset = 1.5;
+  const circuitWidth = Math.max(12, components.length * 3);
+  const wireYOffset = 3;
 
   // Create circuit layout
   const seriesSpacing = circuitWidth / (seriesComponents.length + 1);
