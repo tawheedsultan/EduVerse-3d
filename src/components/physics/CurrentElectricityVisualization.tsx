@@ -56,7 +56,7 @@ const ElectronFlow = ({
       
       electronsRef.current.children.forEach((electron: any, index: number) => {
         // Calculate progress along the circuit path (0 to 1)
-        const baseProgress = (time * speed * 0.3 + index * 0.1) % 1;
+        const baseProgress = (time * speed * 0.4 + index * 0.15) % 1;
         const position = getPositionOnCircuitPath(baseProgress, wirePoints);
         
         electron.position.copy(position);
@@ -68,7 +68,7 @@ const ElectronFlow = ({
       
       conventionalRef.current.children.forEach((particle: any, index: number) => {
         // Conventional current moves in opposite direction
-        const baseProgress = (-time * speed * 0.3 - index * 0.1) % 1;
+        const baseProgress = (-time * speed * 0.4 - index * 0.15) % 1;
         const normalizedProgress = baseProgress < 0 ? 1 + baseProgress : baseProgress;
         const position = getPositionOnCircuitPath(normalizedProgress, wirePoints);
         
@@ -81,7 +81,7 @@ const ElectronFlow = ({
   const getPositionOnCircuitPath = (progress: number, points: WirePoint[]): Vector3 => {
     if (points.length < 4) return new Vector3(0, 0, 0);
     
-    // Create a closed loop path: top-right -> bottom-right -> bottom-left -> top-left -> back to top-right
+    // Create a closed loop path: top-left -> top-right -> bottom-right -> bottom-left -> back to top-left
     const pathPoints = [
       points[0], // top-left
       points[1], // top-right  
@@ -101,40 +101,40 @@ const ElectronFlow = ({
     return startPoint.position.clone().lerp(endPoint.position, localProgress);
   };
 
-  const electronDensity = Math.max(10, Math.min(30, current * 6));
-  const electronSize = Math.max(0.03, Math.min(0.08, current * 0.02));
+  const electronDensity = Math.max(15, Math.min(40, current * 8));
+  const electronSize = Math.max(0.04, Math.min(0.1, current * 0.025));
 
   return (
     <>
-      {/* Electrons (blue, following circuit path) */}
+      {/* Electron flow (bright red particles along circuit path) */}
       <group ref={electronsRef}>
         {Array.from({ length: Math.floor(electronDensity) }, (_, i) => (
           <mesh key={i}>
             <sphereGeometry args={[electronSize]} />
             <meshPhongMaterial 
-              color="#00aaff" 
-              emissive="#00aaff" 
-              emissiveIntensity={0.5 + current * 0.2} 
+              color="#ff0000" 
+              emissive="#ff3333" 
+              emissiveIntensity={0.8 + current * 0.3} 
             />
           </mesh>
         ))}
       </group>
       
-      {/* Conventional current (red, following circuit path in opposite direction) */}
-      {showConventional && (
-        <group ref={conventionalRef}>
-          {Array.from({ length: Math.floor(electronDensity * 0.6) }, (_, i) => (
-            <mesh key={i}>
-              <sphereGeometry args={[electronSize * 0.8]} />
-              <meshPhongMaterial 
-                color="#ff4466" 
-                emissive="#ff4466" 
-                emissiveIntensity={0.5 + current * 0.2} 
-              />
-            </mesh>
-          ))}
-        </group>
-      )}
+      {/* Additional bright red trail effect for visibility */}
+      <group ref={conventionalRef}>
+        {Array.from({ length: Math.floor(electronDensity * 0.3) }, (_, i) => (
+          <mesh key={i}>
+            <sphereGeometry args={[electronSize * 1.5]} />
+            <meshPhongMaterial 
+              color="#ff6666" 
+              emissive="#ff0000" 
+              emissiveIntensity={0.6 + current * 0.2}
+              transparent
+              opacity={0.4}
+            />
+          </mesh>
+        ))}
+      </group>
     </>
   );
 };
@@ -257,39 +257,52 @@ const InteractiveWirePoint = ({
   const [isDragging, setIsDragging] = useState(false);
 
   return (
-    <mesh 
-      ref={meshRef}
-      position={point.position}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(point.id);
-      }}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        setIsDragging(true);
-      }}
-      onPointerMove={(e) => {
-        if (isDragging) {
-          const newPosition = new Vector3(e.point.x, e.point.y, 0);
-          onDrag(point.id, newPosition);
-        }
-      }}
-      onPointerUp={() => setIsDragging(false)}
-    >
-      <sphereGeometry args={[0.12]} />
-      <meshPhongMaterial 
-        color={isSelected ? "#00ff88" : "#ffaa00"} 
-        emissive={isSelected ? "#00ff88" : "#ffaa00"} 
-        emissiveIntensity={isSelected ? 0.7 : 0.4}
-        transparent
-        opacity={0.8}
-      />
-      <Html position={[0, 0.3, 0]}>
+    <group>
+      <mesh 
+        ref={meshRef}
+        position={point.position}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(point.id);
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onPointerMove={(e) => {
+          if (isDragging) {
+            const newPosition = new Vector3(e.point.x, e.point.y, 0);
+            onDrag(point.id, newPosition);
+          }
+        }}
+        onPointerUp={() => setIsDragging(false)}
+      >
+        <sphereGeometry args={[0.15]} />
+        <meshPhongMaterial 
+          color={isSelected ? "#00ff88" : "#ffaa00"} 
+          emissive={isSelected ? "#00ff88" : "#ffaa00"} 
+          emissiveIntensity={isSelected ? 0.9 : 0.6}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+      
+      {/* Position indicator when dragging */}
+      {isDragging && (
+        <Html position={[point.position.x, point.position.y + 0.5, 0]}>
+          <div className="text-sm bg-black/90 text-green-400 px-3 py-2 rounded border border-green-400 font-mono">
+            X: {point.position.x.toFixed(2)}, Y: {point.position.y.toFixed(2)}
+          </div>
+        </Html>
+      )}
+      
+      {/* Point label */}
+      <Html position={[point.position.x, point.position.y - 0.4, 0]}>
         <div className="text-xs bg-black/80 text-white px-2 py-1 rounded pointer-events-none">
-          {point.id}
+          {point.id.toUpperCase()}
         </div>
       </Html>
-    </mesh>
+    </group>
   );
 };
 
