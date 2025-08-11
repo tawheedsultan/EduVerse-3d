@@ -12,19 +12,25 @@ import Detector from './optical-experiment/Detector';
 import ExperimentControls from './optical-experiment/ExperimentControls';
 import ExperimentStep from './optical-experiment/ExperimentStep';
 import ExperimentResults from './optical-experiment/ExperimentResults';
+import RutherfordScattering from './RutherfordScattering';
 
 interface OpticalExperimentProps {
   experiment: {
     id: string;
     name: string;
     description: string;
-    type: 'polarimetry' | 'optical_rotation';
+    type: 'polarimetry' | 'optical_rotation' | 'scattering';
     compound: string;
-    expectedRotation: number;
+    expectedRotation?: number;
+    theory?: string;
   };
 }
 
 const OpticalExperiment = ({ experiment }: OpticalExperimentProps) => {
+  // If it's a scattering experiment, render the Rutherford component
+  if (experiment.type === 'scattering') {
+    return <RutherfordScattering experiment={experiment as any} />;
+  }
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [lightAngle, setLightAngle] = useState(0);
@@ -76,13 +82,13 @@ const OpticalExperiment = ({ experiment }: OpticalExperimentProps) => {
               break;
             case 4:
               // Sample rotates the light
-              setSampleRotation(experiment.expectedRotation);
-              setLightAngle(90 + experiment.expectedRotation * 0.5);
+              setSampleRotation(experiment.expectedRotation || 0);
+              setLightAngle(90 + (experiment.expectedRotation || 0) * 0.5);
               setLightBeamProgress(90);
               break;
             case 5:
               // Final measurement
-              setObservedRotation(experiment.expectedRotation);
+              setObservedRotation(experiment.expectedRotation || 0);
               setLightBeamProgress(100);
               break;
           }

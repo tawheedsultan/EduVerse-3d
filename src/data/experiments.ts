@@ -3,9 +3,9 @@ export interface Experiment {
   id: string;
   name: string;
   description: string;
-  type: 'polarimetry' | 'optical_rotation';
+  type: 'polarimetry' | 'optical_rotation' | 'scattering';
   compound: string;
-  expectedRotation: number;
+  expectedRotation?: number;
   theory: string;
   applications: string[];
 }
@@ -90,5 +90,14 @@ export const experiments: Experiment[] = [
     expectedRotation: -162.0,
     theory: 'Natural nicotine is strongly levorotatory due to its pyrrolidine chiral center.',
     applications: ['Tobacco analysis', 'Pharmaceutical research', 'Toxicology studies']
+  },
+  {
+    id: 'rutherford-scattering',
+    name: 'Rutherford Scattering Experiment',
+    description: 'Alpha particle scattering by gold foil revealing atomic structure',
+    type: 'scattering',
+    compound: 'Gold Foil (Au)',
+    theory: 'Rutherford fired alpha particles at thin gold foil. Most passed through, but some deflected at large angles, proving atoms have dense nuclei. Setup: radioactive source (radium/polonium) → collimating slits → gold foil (few atoms thick) → zinc sulfide detector screen → microscope for observation.',
+    applications: ['Atomic structure discovery', 'Nuclear physics foundation', 'Particle detection methods']
   }
 ];
